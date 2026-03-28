@@ -1,0 +1,140 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage[letterpaper, top=1in,right=1in, bottom=1.5in]{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    breaklines=true,
+    showstringspaces=false
+}
+\renewcommand{\baselinestretch}{1.10}
+\setlength{\parskip}{1.2em}
+\title{A Heuristic Analysis of Linear Interpolation for Square Root}
+\author{Shubhankar Kumar}
+\date{27 March 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\subsection{Need of Linear Interpolation}
+While the Babylonian method, formally known as the Newton-Raphson method, remains 
+the standard approach for computing square roots with high precision, it relies on 
+iterative recursion that incurs non-trivial computational overhead. For applications 
+running on low-power hardware or scenarios involving quick mental estimation, the 
+CPU cycles demanded by repeated division and averaging operations make it a 
+suboptimal choice despite its numerical superiority. This is where Linear Interpolation methods come into play, offering a computationally 
+lighter alternative that trades marginal precision for significantly reduced overhead.
+\subsection{Hypothetical Framework}
+As the input $x$ increases, the interval between consecutive perfect squares 
+grows in absolute terms, but shrinks as a percentage of the total value. 
+Consequently, the relative error introduced by linear interpolation is expected 
+to decrease as $x$ increases, since the function $f(x) = \sqrt{x}$ becomes 
+progressively more linear over larger intervals.
+
+Now, The goal is to evaluate a Single-Pass Linear Interpolation model by determining 
+whether the trade-off between accuracy and computational speed is justifiable 
+for practical use cases.
+\section{Mathematical Framework}
+To approximate the square root of a given number $i$, we first identify the largest integer $a$ such that $a^2 \le i$. This serves as our lower bound. The upper bound is defined by the next consecutive integer squared, $(a+1)^2$.
+
+The linear interpolation assumes that between these two perfect squares, the function $f(x) = \sqrt{x}$ behaves as a straight line. The slope of this line is given by the difference in the square roots divided by the difference in the squares:
+\begin{equation}
+    \text{slope} = \frac{(a+1) - a}{(a+1)^2 - a^2} = \frac{1}{(a+1)^2 - a^2}
+\end{equation}
+
+The approximated square root, $\beta$, is then calculated as:
+\begin{equation}
+    \beta = a + \frac{i - a^2}{(a+1)^2 - a^2}
+\end{equation}
+
+\section{Implementation \& Methodology}
+The algorithm was implemented in C++ using a single-pass approach to ensure $O(1)$ time complexity for individual calculations. 
+
+\subsection{Algorithmic Logic}
+The script which is written in \texttt{C++} takes an input $i$, computes $a = \lfloor i^{0.5} \rfloor$, and applies the interpolation formula, while the second script, written in, \texttt{Python} is developed using \texttt{NumPy} and \texttt{Matplotlib} to iterate through $x \in [1, 2000]$, so we can validate the model. The absolute error was defined as:\textbf{}
+\begin{equation}
+    \epsilon = | \sqrt{x} - \beta |
+\end{equation}
+\section{Complexity Analysis}
+A key motivation for this heuristic is the reduction in computational complexity. 
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Feature} & \textbf{Newton-Raphson} & \textbf{Linear Interpolation} \\ \hline
+Time Complexity  & $O(\log n)$ per bit of precision & $O(1)$ (Constant Time) \\ \hline
+Space Complexity & $O(1)$ & $O(1)$ \\ \hline
+Operations       & Iterative Division/Addition & Single-Pass Arithmetic \\ \hline
+\end{tabular}
+\caption{Comparison of Algorithmic Complexity}
+\end{table}
+
+The Newton-Raphson method is an iterative process where the number of steps required is proportional to the logarithm of the desired precision. In contrast, the proposed linear interpolation is a "branchless" calculation that executes in a fixed number of CPU cycles regardless of the input size $i$.
+\section{Results and Error Analysis}
+The following plot illustrates the absolute error across the tested range.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/sqrt_error_plot.png}
+    \caption{Absolute Error of Linear Interpolation from $x=1$ to $x=2000$.}
+    \label{fig:error_plot}
+\end{figure}
+
+\subsection{Observations}
+\begin{itemize}
+    \item \textbf{Sawtooth Pattern:} The error drops to exactly $0$ whenever $x$ is a perfect square. The peaks occur approximately midway between squares where the curvature of $\sqrt{x}$ is most disconnected from the linear secant line.
+    \item \textbf{Error Decay:} As hypothesized, the maximum error peaks early (near $x=1$) and steadily decays. For $x > 500$, the absolute error remains consistently below $0.01$, confirming the method's reliability for large-scale mental estimation.
+\end{itemize}
+
+\section{Conclusion}
+The Single-Pass Linear Interpolation model provides a highly efficient alternative to recursive methods like Newton-Raphson for non-critical applications. Its $O(1)$ performance and diminishing error rate make it an ideal heuristic for low-power hardware and real-time systems where "good enough" precision is preferred over iterative exactness.
+\newpage
+\appendix
+\section{Source Code}
+
+\subsection{C++ Implementation (Efficiency Focus)}
+The following C++ snippet demonstrates the $O(1)$ approximation logic, suitable for embedded or high-performance systems.
+
+\begin{lstlisting}
+#include <iostream>
+#include <cmath>
+
+int main() {
+    double i;
+    std::cout << "Enter number: ";
+    std::cin >> i;
+
+    int a = static_cast<int>(std::sqrt(i));
+    double b = (std::pow(a + 1, 2)) - (std::pow(a, 2));
+    double result = a + ((i - std::pow(a, 2)) / b);
+
+    std::cout << "Approximated Sqrt: " << result << std::endl;
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Python Validation Script}
+This script was used to generate the error distribution data analyzed in Section 4.
+\begin{lstlisting}[language=Python]
+import numpy as np
+
+def approx_sqrt(x):
+    a = int(np.sqrt(x))
+    a2, b2 = a*a, (a+1)*(a+1)
+    if a2 == x: return float(a)
+    return a + (x - a2) / (b2 - a2)
+\end{lstlisting}
+\end{document}
